@@ -1,5 +1,18 @@
 #include "get_next_line.h"
 
+size_t        ft_strlen(const char *str)
+{
+        size_t        length;
+
+        length = 0;
+        while (*str != '\0')
+        {
+                length++;
+                str++;
+        }
+        return (length);
+}
+
 char        *ft_strncpy(char *dest, const char *src, int n)
 {
         int        i;
@@ -18,23 +31,6 @@ char        *ft_strncpy(char *dest, const char *src, int n)
                 dest[i] = '\0';
                 i++;
         }
-        return (dest);
-}
-
-char        *ft_strcpy(char *dest, const char *src)
-{
-        int        i;
-
-        if (dest == NULL || src == NULL)  // NULLポインタチェック
-                return (NULL);
-
-        i = 0;
-        while (src[i] != '\0')
-        {
-                dest[i] = src[i];
-                i++;
-        }
-        dest[i] = '\0';
         return (dest);
 }
 
@@ -64,20 +60,6 @@ char        *ft_strnjoin(char const *s1, char const *s2, int n)
         }
         result[i] = '\0';
         return (result);
-}
-
-
-size_t        ft_strlen(const char *str)
-{
-        size_t        length;
-
-        length = 0;
-        while (*str != '\0')
-        {
-                length++;
-                str++;
-        }
-        return (length);
 }
 
 char        *ft_strchr_len(const char *str, int c)
@@ -133,28 +115,39 @@ static void        safe_free(char **ptr)
         }
 }
 
-static char        *find_newline(char **st_arr)
+static char	*find_newline(char **st_arr)
 {
-        char        *newline_pos;
-        char        *line;
-        int                len;
+	char	*newline_pos;
+	char	*line;
+	int		len;
 
-        newline_pos = ft_strchr_len(*st_arr, '\n');
-        if (newline_pos)
-                len = newline_pos - *st_arr + 1;
-        else
-                len = ft_strlen(*st_arr);
-        line = malloc(sizeof(char) * (len + 1));
-        if (!line)
-                return (NULL);
-        ft_strncpy(line, *st_arr, len);
-        line[len] = '\0';
-        if (newline_pos)
-                ft_strcpy(*st_arr, newline_pos + 1);
-        else
-                safe_free(st_arr);
-        return (line);
+	newline_pos = ft_strchr_len(*st_arr, '\n');
+	if (newline_pos)
+		len = newline_pos - *st_arr + 1;
+	else
+		len = ft_strlen(*st_arr);
+	line = malloc(sizeof(char) * (len + 1));
+	if (!line)
+		return (NULL);
+	ft_strncpy(line, *st_arr, len);
+	line[len] = '\0';
+	if (newline_pos)
+	{
+		char *new_st_arr = ft_strdup(newline_pos + 1);
+		if (!new_st_arr)
+		{
+			safe_free(st_arr);
+			free(line);
+			return (NULL);
+		}
+		safe_free(st_arr);
+		*st_arr = new_st_arr;
+	}
+	else
+		safe_free(st_arr);
+	return (line);
 }
+
 
 static int        append_buffer(char **st_arr, char *buf, int count_bytes)
 {
@@ -180,13 +173,16 @@ static int        read_fd(int fd, char **st_arr)
         buf = malloc(BUFFER_SIZE + 1);
         if (!buf)
                 return (-1);
-        while (1)
+        count_bytes = 1;
+        while (count_bytes > 0)
         {
                 count_bytes = read(fd, buf, BUFFER_SIZE);
-                if (count_bytes <= 0 || append_buffer(st_arr, buf, count_bytes) < 0)
-                        break ;
+                if (count_bytes <= 0)
+                        break;
+                if (append_buffer(st_arr, buf, count_bytes) < 0)
+                        break;
                 if (ft_strchr_len(*st_arr, '\n'))
-                        break ;
+                        break;
         }
         free(buf);
         if (count_bytes < 0)
@@ -194,24 +190,29 @@ static int        read_fd(int fd, char **st_arr)
         return (0);
 }
 
-char        *get_next_line(int fd)
+char	*get_next_line(int fd)
 {
-        static char        *st_arr[FD_MAX];
-        char                *line;
-        int                        ret;
+	static char	*st_arr[FD_MAX];
+	char		*line;
+	int			ret;
 
-        if (fd < 0 || fd >= FD_MAX || BUFFER_SIZE <= 0)
-                return (NULL);
-        if (st_arr[fd] == NULL && (st_arr[fd] = ft_strdup("")) == NULL)
-                return (NULL);
-        ret = read_fd(fd, &st_arr[fd]);
-        if (ret < 0 || (ret == 0 && *st_arr[fd] == '\0'))
-        {
-                safe_free(&st_arr[fd]);
-                return (NULL);
-        }
-        line = find_newline(&st_arr[fd]);
-        if (line == NULL)
-                safe_free(&st_arr[fd]);
-        return (line);
+	if (fd < 0 || fd >= FD_MAX || BUFFER_SIZE <= 0)
+		return (NULL);
+	if (st_arr[fd] == NULL)
+		st_arr[fd] = ft_strdup("");
+	if (st_arr[fd] == NULL)
+		return (NULL);
+	ret = read_fd(fd, &st_arr[fd]);
+	if (ret < 0 || *st_arr[fd] == '\0')
+	{
+		safe_free(&st_arr[fd]);
+		return (NULL);
+	}
+	line = find_newline(&st_arr[fd]);
+	if (line == NULL)
+	{
+		safe_free(&st_arr[fd]);
+		return (NULL);
+	}
+	return (line);
 }
