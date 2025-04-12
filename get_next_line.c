@@ -41,12 +41,12 @@ char        *ft_strnjoin(char const *s1, char const *s2, int n)
         size_t                i;
         size_t                j;
 
-        if (s1 == NULL || s2 == NULL || n < 0)  // NULLポインタとnのチェック
+        if (s1 == NULL || s2 == NULL || n < 0)
                 return (NULL);
         s1_len = ft_strlen(s1);
-        result = (char *)malloc(s1_len + n + 1);  // 確保するメモリのサイズを正しく計算
+        result = (char *)malloc(s1_len + n + 1);
         if (result == NULL)
-                return (NULL);  // malloc失敗時にNULLを返す
+                return (NULL);
         i = 0;
         while (s1[i] != '\0')
         {
@@ -54,7 +54,7 @@ char        *ft_strnjoin(char const *s1, char const *s2, int n)
                 i++;
         }
         j = 0;
-        while (j < n && s2[j] != '\0')  // nに制限を加える
+        while (j < n && s2[j] != '\0')
         {
                 result[i++] = s2[j++];
         }
@@ -66,7 +66,7 @@ char        *ft_strchr_len(const char *str, int c)
 {
         int        i;
 
-        if (str == NULL)  // NULLポインタチェック
+        if (str == NULL)
                 return (NULL);
 
         i = 0;
@@ -80,20 +80,18 @@ char        *ft_strchr_len(const char *str, int c)
         return (NULL);
 }
 
-
 char        *ft_strdup(const char *src)
 {
         size_t        len;
         char        *dest;
         char        *ptr;
 
-        if (src == NULL)  // NULLポインタチェック
+        if (src == NULL)
                 return (NULL);
-
         len = ft_strlen(src);
         dest = (char *)malloc(len + 1);
         if (dest == NULL)
-                return (NULL);  // malloc失敗時にNULLを返す
+                return (NULL);
 
         ptr = dest;
         while (*src != '\0')
@@ -147,7 +145,6 @@ static char	*find_newline(char **st_arr)
 		safe_free(st_arr);
 	return (line);
 }
-
 
 static int        append_buffer(char **st_arr, char *buf, int count_bytes)
 {
@@ -215,4 +212,29 @@ char	*get_next_line(int fd)
 		return (NULL);
 	}
 	return (line);
+}
+
+int	main()
+{
+	int	fd;
+	char	*line;
+
+	fd = open("test.txt", O_RDONLY);
+	if (fd == -1)
+	{
+		perror("faild to open file");
+		return (1);
+	}
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+		line = NULL;
+	}
+	if (close(fd) == -1)
+	{
+		perror("failed to close file");
+		return (1);
+	}
+	return (0);
 }
