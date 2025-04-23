@@ -80,28 +80,26 @@ char        *ft_strchr_len(const char *str, int c)
         return (NULL);
 }
 
-char        *ft_strdup(const char *src)
+char *ft_strdup(const char *src)
 {
-        size_t        len;
-        char        *dest;
-        char        *ptr;
+    size_t len;
+    char *dest;
+    size_t i = 0;
 
-        if (src == NULL)
-                return (NULL);
-        len = ft_strlen(src);
-        dest = (char *)malloc(len + 1);
-        if (dest == NULL)
-                return (NULL);
+    if (src == NULL)
+        return (NULL);
+    len = ft_strlen(src);
+    dest = (char *)malloc(len + 1);
+    if (dest == NULL)
+        return (NULL);
+    while (src[i] != '\0')
+    {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
 
-        ptr = dest;
-        while (*src != '\0')
-        {
-                *ptr = *src;
-                ptr++;
-                src++;
-        }
-        *ptr = '\0';
-        return (dest);
+    return (dest);
 }
 
 static void        safe_free(char **ptr)
