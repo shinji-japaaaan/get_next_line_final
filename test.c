@@ -84,7 +84,7 @@ int append_buffer(char **str, char *buf, int count_bytes)//引数を*strとし�
         free(tmp);//エラーの時にtmpをfree
         return (-1);
     }
-    free(tmp); 
+    free(tmp); //buf,strを結合したら、もともとあった*strは解放
     return (0);
 }
 
@@ -125,10 +125,10 @@ int read_fd(int fd, char **str)
 
 void safe_free(char **str)
 {
-    if (str != NULL || *str != NULL)//コード書いている中で、このifの役割が二重freeを防ぐことであるとわかった
+    if (str != NULL && *str != NULL)//コード書いている中で、このifの役割が二重freeを防ぐことであるとわかった,if文の中は||ではなく＆＆
     {
         free(*str);
-        *str == NULL; //*str == NULLとしてしまっていた
+        *str = NULL; //*str == NULLとしてしまっていた!!!
     }
 }
 
@@ -153,7 +153,7 @@ char *ft_strncpy(char *line, char *str, int len)
     return (line);
 }
 
-char *find_newline(char **str)
+char *find_newline(char **str)//ここでエラーがおきたらstrをフリーしていい
 {
     char *new_pos;
     int len = 0;
@@ -175,8 +175,8 @@ char *find_newline(char **str)
     }
     if (new_pos)
     {
-        tmp = ft_strdup(*str + len);//ここでtmpではなく、直接*strにいれてしまっていた
-        if (!*str)
+        tmp = ft_strdup(new_pos + 1);//ここでtmpではなく、直接*strにいれてしまっていた、引数として*str + lenとしたが、new_pos + 1の方がシンプル
+        if (!tmp)//*strではなくtmp
         {
             safe_free(str);
             free(line);//ここのfreeができていなかった
@@ -225,12 +225,13 @@ int main()
     int fd = 0;
     char *line;
 
-    if ((fd = open("test.txt", O_RDONLY)) == -1)
+    printf("BUFFER_SIZE = %d\n", BUFFER_SIZE);
+    if ((fd = open("test.txt", O_RDONLY)) == -1)//ここのO_RDONLYの書き方も注意
     {
         perror("failed to open");
         return (-1);
     }
-    if ((line = get_next_line(fd)) != NULL)
+    while ((line = get_next_line(fd)) != NULL)//if文にしてしまっていた
     {
         printf("%s\n", line);
         free(line);
