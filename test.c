@@ -54,7 +54,7 @@ char *ft_strnjoin(char *str, char *buf, int count_bytes)
     len = ft_strlen(str);
     new_str = malloc(len + count_bytes + 1);
     if (!new_str)
-        return(-1);
+        return(NULL);
     int i = 0;
     while (str[i])
     {
@@ -104,12 +104,12 @@ char *ft_strchr_len(char *str, char c)//ここはintではなくてはいけな�
 int read_fd(int fd, char **str)
 {
     char *buf;
-    int count_bytes = 0;
+    int count_bytes = 1;
 
     buf = malloc(BUFFER_SIZE + 1);
     if (buf == NULL)
         return (-1);
-    while (count_bytes > 0)
+    while (count_bytes > 0)//count_bytes = 0;としてしまっていたのでwhileに入らなかった
     {
         count_bytes = read(fd, buf, BUFFER_SIZE);
         if (count_bytes <= 0)
@@ -128,13 +128,29 @@ void safe_free(char **str)
     if (str != NULL || *str != NULL)//コード書いている中で、このifの役割が二重freeを防ぐことであるとわかった
     {
         free(*str);
-        *str == NULL;
+        *str == NULL; //*str == NULLとしてしまっていた
     }
 }
 
-void ft_strncpy(char *line, char *str, int len)
+char *ft_strncpy(char *line, char *str, int len)
 {
-
+    if (line == NULL || str == NULL || len <= 0)
+    {
+        return (NULL);
+    }
+    int i = 0;
+    while (str[i] && i < len)//i < lenの書き方ができなかった
+    {
+        line[i] = str[i];
+        i++;
+    }
+    while (i < len)//ヌルでうめるここのコードが書けなかった
+    {
+        line[i] = '\0';
+        i++; //iがぬけていた
+    }
+    line[len] = '\0';
+    return (line);
 }
 
 char *find_newline(char **str)
@@ -152,8 +168,11 @@ char *find_newline(char **str)
     line = malloc(len + 1);
     if (!line)
         return (NULL);
-    ft_strncpy(line, *str, len);
-    line[len] = '\0';
+    if (ft_strncpy(line, *str, len) == NULL)//ここのエラー処理を追加した。まだ、戻ってきて処理再開できるようにstrは解放しない
+    {
+        free(line);
+        return (NULL);
+    }
     if (new_pos)
     {
         tmp = ft_strdup(*str + len);//ここでtmpではなく、直接*strにいれてしまっていた
@@ -173,7 +192,7 @@ char *find_newline(char **str)
 
 char *get_next_line(int fd)
 {
-    char *str[FD_MAX];
+    static char *str[FD_MAX]; //!!staticをつけていなかった
     char *line;
     int res = 0;
 
@@ -186,7 +205,7 @@ char *get_next_line(int fd)
     if (str[fd] == NULL)
         return (NULL);
     res = read_fd(fd, &str[fd]);
-    if (res < 0 || str[fd] == '\0')
+    if (res < 0 || *str[fd] == '\0')//*str[fd] *をつけるのわすれないこと
     {
         safe_free(&str[fd]);
         return (NULL);
@@ -194,10 +213,10 @@ char *get_next_line(int fd)
     line = find_newline(&str[fd]);
     if (line == NULL)
     {
-        safr_free(&str[fd]);
+        safe_free(&str[fd]);
         return (NULL);
     }
-    safe_free(&str[fd]);
+    // safe_free(&str[fd]); //なぜここでsafe_freeしているのか
     return (line);
 }
 
@@ -206,18 +225,19 @@ int main()
     int fd = 0;
     char *line;
 
-    if ((fd = open("test.txt", O_RDONLY)) = -1)
+    if ((fd = open("test.txt", O_RDONLY)) == -1)
     {
         perror("failed to open");
         return (-1);
     }
-    if ((line = get_next_lien(fd)) != NULL)
+    if ((line = get_next_line(fd)) != NULL)
     {
         printf("%s\n", line);
         free(line);
-        close(fd);
-        return (-1);
+        line = NULL; //ここでNULLをいれていなかった
+        // close(fd); //ここでcloseはしてはいけない
+        // return (-1); //ここはいらない
     }
     close(fd);
-    return (0)
+    return (0);
 }
