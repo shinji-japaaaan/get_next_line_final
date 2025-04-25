@@ -149,7 +149,7 @@ char *ft_strncpy(char *line, char *str, int len)
         line[i] = '\0';
         i++; //iがぬけていた
     }
-    line[len] = '\0';
+    line[len] = '\0';//関数の中でこれをするようにした
     return (line);
 }
 
